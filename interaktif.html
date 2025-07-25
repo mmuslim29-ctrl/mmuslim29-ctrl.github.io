@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Pembelajaran V2: Petualangan Logika</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f0f4f8;
+        }
+        .screen {
+            display: none;
+            animation: fadeIn 0.7s ease-in-out;
+        }
+        .screen.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .main-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 2rem;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            border: 1px solid #e2e8f0;
+        }
+        .button-primary {
+            background-image: linear-gradient(to right, #3b82f6, #60a5fa);
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px 0 rgba(59, 130, 246, 0.35);
+            border: none;
+            cursor: pointer;
+        }
+        .button-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px 0 rgba(59, 130, 246, 0.45);
+        }
+        .button-secondary {
+            background-image: linear-gradient(to right, #10b981, #34d399);
+             color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px 0 rgba(16, 185, 129, 0.35);
+            border: none;
+            cursor: pointer;
+        }
+        .button-secondary:hover {
+             transform: translateY(-3px);
+            box-shadow: 0 7px 20px 0 rgba(16, 185, 129, 0.45);
+        }
+        .draggable {
+            cursor: grab;
+            user-select: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .draggable:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .dragging {
+            opacity: 0.6;
+            cursor: grabbing;
+            transform: scale(1.1);
+        }
+        .drop-zone {
+            border: 2px dashed #94a3b8;
+            transition: all 0.3s ease;
+        }
+        .drop-zone.drag-over {
+            background-color: #e0f2fe;
+            border-color: #3b82f6;
+            transform: scale(1.02);
+        }
+        .drop-zone.correct {
+            border: 2px solid #22c55e;
+            background-color: #dcfce7;
+        }
+        .drop-zone.incorrect {
+            border: 2px solid #ef4444;
+            background-color: #fee2e2;
+        }
+        .flowchart-symbol {
+            fill: white;
+            stroke: #118AB2; /* Changed from black to blue */
+            stroke-width: 2.5;
+        }
+        .flowchart-drop-zone.correct-drop {
+            animation: pulse-green 0.5s ease;
+        }
+        .flowchart-drop-zone.incorrect-drop {
+            animation: shake 0.5s ease;
+        }
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        .flow-line { width: 3px; background-color: #475569; z-index: -1; }
+        .arrow-down { width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 15px solid #475569; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s ease-in-out; }
+        .modal-overlay.visible { opacity: 1; visibility: visible; }
+        .modal-content { background: white; padding: 2rem; border-radius: 1rem; max-width: 500px; width: 90%; text-align: left; transform: scale(0.9); transition: all 0.3s ease-in-out; }
+        .modal-overlay.visible .modal-content { transform: scale(1); }
+        .loader { width: 48px; height: 48px; border: 5px solid #FFF; border-bottom-color: #3b82f6; border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+
+    <div id="app" class="max-w-5xl mx-auto p-4 sm:p-6 md:p-8">
+
+        <!-- All screens here -->
+        <div id="screen-welcome" class="screen active text-center">
+            <div class="main-card">
+                <h1 class="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400 mb-4">Petualangan Logika</h1>
+                <p class="text-slate-600 mb-8 max-w-2xl mx-auto text-lg">Selamat datang, perancang sistem masa depan! Saatnya mengasah logika dan kreativitasmu dengan cara yang paling seru. Siap?</p>
+                <button onclick="startApp()" class="button-primary">Mulai Petualangan!</button>
+            </div>
+        </div>
+
+        <div id="screen-algo-challenge" class="screen">
+            <div class="main-card">
+                <h2 class="text-3xl font-bold mb-2 text-slate-800">Tantangan 1: Proses Berangkat Sekolah</h2>
+                <p class="text-slate-600 mb-6">Algoritma itu seperti rutinitas pagi, urutannya penting agar tidak terlambat! Susun langkah-langkah ini menjadi rutinitas yang benar.</p>
+                <div class="flex flex-col md:flex-row gap-8">
+                    <div id="source-steps" class="w-full md:w-1/3 bg-slate-100 p-4 rounded-xl border">
+                        <h3 class="font-bold mb-4 text-center text-slate-700">Pilihan Langkah</h3>
+                        <div id="draggable-steps-container" class="space-y-3"></div>
+                    </div>
+                    <div class="w-full md:w-2/3">
+                        <h3 class="font-bold mb-4 text-center text-slate-700">Rutinitas Pagi Juara</h3>
+                        <div id="recipe-box" class="space-y-3">
+                            <div class="drop-zone p-4 rounded-lg text-center text-slate-500" data-order="1">1. Langkah pertama...</div>
+                            <div class="drop-zone p-4 rounded-lg text-center text-slate-500" data-order="2">2. Langkah kedua...</div>
+                            <div class="drop-zone p-4 rounded-lg text-center text-slate-500" data-order="3">3. Langkah ketiga...</div>
+                            <div class="drop-zone p-4 rounded-lg text-center text-slate-500" data-order="4">4. Langkah keempat...</div>
+                            <div class="drop-zone p-4 rounded-lg text-center text-slate-500" data-order="5">5. Langkah kelima...</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="algo-feedback" class="mt-6 text-center font-semibold h-6"></div>
+                <div class="mt-8 text-center">
+                    <button onclick="checkAlgoOrder()" class="button-primary" id="check-algo-btn">Cek Jawabanku</button>
+                    <button onclick="changeScreen('screen-symbols')" class="button-primary hidden" id="to-symbols-btn">Lanjut ke Simbol</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-symbols" class="screen">
+             <div class="main-card">
+                <h2 class="text-3xl font-bold mb-2 text-slate-800">Galeri Simbol Flowchart</h2>
+                <p class="text-slate-600 mb-8">Flowchart adalah bahasa visual. Kenali setiap simbolnya! Klik kartu untuk membaliknya.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="symbol-gallery-container"></div>
+                <div class="mt-10 text-center">
+                    <button onclick="changeScreen('screen-flowchart-challenge')" class="button-primary">Aku Siap Merancang!</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="screen-flowchart-challenge" class="screen">
+             <div class="main-card">
+                <h2 class="text-3xl font-bold mb-2 text-slate-800">Tantangan Final: Rancang Flowchart Login!</h2>
+                <p class="text-slate-600 mb-6">Saatnya beraksi! Rancang flowchart untuk proses **"Login ke Akun"**. Perhatikan, ada jalur percabangan!</p>
+                <div class="flex flex-col lg:flex-row gap-6">
+                    <div class="w-full lg:w-1/4 bg-slate-100 p-4 rounded-xl border">
+                        <h3 class="font-bold mb-4 text-center">Bank Komponen</h3>
+                        <div class="grid grid-cols-2 gap-4" id="component-bank"></div>
+                    </div>
+                    <div class="w-full lg:w-3/4">
+                        <h3 class="font-bold mb-8 text-center">Area Perancangan</h3>
+                        <div class="flex flex-col items-center" id="flowchart-canvas">
+                            <div class="flowchart-drop-zone w-48 h-24 rounded-full" data-expected-symbol="terminator" data-expected-text="Mulai"></div>
+                            <div class="h-12 relative flex items-center justify-center"><div class="flow-line h-full"></div><div class="arrow-down bottom-0"></div></div>
+                            <div class="flowchart-drop-zone w-56 h-24" data-expected-symbol="input-output" data-expected-text="Input Username & Password" style="transform: skew(-15deg);"></div>
+                            <div class="h-12 relative flex items-center justify-center"><div class="flow-line h-full"></div><div class="arrow-down bottom-0"></div></div>
+                            <div id="decision-node" class="flowchart-drop-zone w-64 h-32" data-expected-symbol="decision" data-expected-text="Apakah data valid?" style="clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);"></div>
+                            <div class="relative w-full h-32 mt-2">
+                                <div class="absolute left-0 top-0 w-1/2 h-full flex flex-col items-center">
+                                    <div class="w-px h-8 bg-slate-500"></div><div class="w-full h-px bg-slate-500 relative"><span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-white px-1 text-sm font-semibold text-green-600">Ya</span></div><div class="w-px h-4 bg-slate-500"></div><div class="arrow-down" style="border-top-color: #475569; position: static;"></div>
+                                    <div id="yes-path" class="flowchart-drop-zone w-56 h-24 mt-2" data-expected-symbol="input-output" data-expected-text="Tampilkan Pesan 'Login Berhasil'" style="transform: skew(-15deg);"></div>
+                                </div>
+                                <div class="absolute right-0 top-0 w-1/2 h-full flex flex-col items-center">
+                                    <div class="w-px h-8 bg-slate-500"></div><div class="w-full h-px bg-slate-500 relative"><span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-white px-1 text-sm font-semibold text-red-600">Tidak</span></div><div class="w-px h-4 bg-slate-500"></div><div class="arrow-down" style="border-top-color: #475569; position: static;"></div>
+                                    <div id="no-path" class="flowchart-drop-zone w-56 h-24 mt-2" data-expected-symbol="input-output" data-expected-text="Tampilkan Pesan 'Login Gagal'" style="transform: skew(-15deg);"></div>
+                                </div>
+                            </div>
+                            <div class="relative w-full h-20 mt-24">
+                               <div class="absolute w-1/2 h-full top-0 left-0 border-r-2 border-b-2 border-slate-500 rounded-br-2xl"></div><div class="absolute w-1/2 h-full top-0 right-0 border-l-2 border-b-2 border-slate-500 rounded-bl-2xl"></div><div class="arrow-down absolute bottom-0 left-1/2 -translate-x-1/2" style="border-top-color: #475569;"></div>
+                            </div>
+                            <div class="flowchart-drop-zone w-48 h-24 rounded-full" data-expected-symbol="terminator" data-expected-text="Selesai"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="flowchart-feedback" class="mt-8 text-center font-semibold h-6"></div>
+                 <div class="mt-8 text-center space-x-4">
+                    <button onclick="checkFlowchart()" class="button-primary" id="check-flowchart-btn">Periksa Flowchart</button>
+                    <button onclick="resetFlowchart()" class="bg-amber-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-amber-600 transition shadow-md">Coba Lagi</button>
+                    <button onclick="getAiExplanation()" class="button-secondary hidden" id="ai-explain-btn">✨ Dapatkan Penjelasan AI</button>
+                </div>
+             </div>
+        </div>
+        
+        <div id="screen-end" class="screen text-center">
+            <div class="main-card">
+                <h1 class="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-400 mb-4">Luar Biasa!</h1>
+                <p class="text-slate-600 mb-8 max-w-2xl mx-auto text-lg">Kamu telah menyelesaikan Petualangan Logika! Kemampuan merancang alur berpikirmu sudah naik level.</p>
+                <div class="bg-slate-100 p-4 rounded-lg mt-6">
+                    <h3 class="font-bold text-slate-700">Tantangan Berikutnya?</h3>
+                    <div id="new-idea-container" class="text-blue-600 font-semibold my-2 min-h-[28px]">Klik tombol untuk mendapatkan ide baru!</div>
+                    <button onclick="getNewFlowchartIdea()" class="button-secondary">✨ Beri Aku Ide Flowchart Baru</button>
+                </div>
+                <button onclick="restartApp()" class="button-primary mt-8">Ulangi Petualangan</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal for AI Explanation -->
+    <div id="ai-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-slate-800">✨ Penjelasan dari AI</h2>
+                <button onclick="closeModal()" class="text-2xl font-bold text-slate-500 hover:text-slate-800">&times;</button>
+            </div>
+            <div id="ai-modal-body">
+                <div class="flex justify-center items-center h-32">
+                    <div class="loader"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Sound Engine ---
+        let synth;
+        function setupSounds() {
+            synth = new Tone.Synth().toDestination();
+            Tone.Transport.start();
+        }
+        const playSound = (note, duration = '8n') => { if (synth) synth.triggerAttackRelease(note, duration); };
+        const playSuccessSound = () => { if(synth) synth.triggerAttackRelease("C5", "8n"); };
+        const playFailureSound = () => { if(synth) synth.triggerAttackRelease("C3", "8n"); };
+        const playDropSound = () => { if(synth) synth.triggerAttackRelease("C4", "16n"); };
+        const playWinSound = () => {
+            if (!synth) return;
+            const now = Tone.now();
+            synth.triggerAttackRelease("C4", "8n", now);
+            synth.triggerAttackRelease("E4", "8n", now + 0.2);
+            synth.triggerAttackRelease("G4", "8n", now + 0.4);
+            synth.triggerAttackRelease("C5", "4n", now + 0.6);
+        };
+        
+        // --- App Navigation & State ---
+        let currentScreen = 'screen-welcome';
+        function changeScreen(screenId) {
+            document.getElementById(currentScreen).classList.remove('active');
+            document.getElementById(screenId).classList.add('active');
+            currentScreen = screenId;
+        }
+        function startApp() {
+            if (Tone.context.state !== 'running') {
+                Tone.context.resume().then(setupSounds);
+            }
+            changeScreen('screen-algo-challenge');
+        }
+        function restartApp() {
+            resetAlgoChallenge();
+            resetFlowchart();
+            document.getElementById('new-idea-container').innerHTML = 'Klik tombol untuk mendapatkan ide baru!';
+            changeScreen('screen-welcome');
+        }
+
+        // --- Utility ---
+        const shuffleArray = (array) => {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        };
+
+        // --- Logic: Tantangan Algoritma ---
+        const algoSteps = [
+            { id: 'step1', text: 'Bangun Tidur', order: 1 },
+            { id: 'step2', text: 'Mandi dan Bersiap', order: 2 },
+            { id: 'step3', text: 'Sarapan', order: 3 },
+            { id: 'step4', text: 'Memakai Sepatu', order: 4 },
+            { id: 'step5', text: 'Berangkat ke Sekolah', order: 5 },
+        ];
+        function initializeAlgoChallenge() {
+            const container = document.getElementById('draggable-steps-container');
+            container.innerHTML = '';
+            const shuffledSteps = [...algoSteps];
+            shuffleArray(shuffledSteps);
+            shuffledSteps.forEach(step => {
+                const div = document.createElement('div');
+                div.id = step.id;
+                div.className = 'draggable bg-white p-3 rounded-lg shadow border cursor-grab';
+                div.textContent = step.text;
+                div.draggable = true;
+                div.dataset.order = step.order;
+                container.appendChild(div);
+            });
+            addAlgoDragListeners();
+        }
+        function addAlgoDragListeners() {
+            const draggables = document.querySelectorAll('#draggable-steps-container .draggable');
+            const dropZones = document.querySelectorAll('#recipe-box .drop-zone');
+            draggables.forEach(draggable => {
+                draggable.addEventListener('dragstart', (e) => { e.target.classList.add('dragging'); e.dataTransfer.setData('text/plain', e.target.id); });
+                draggable.addEventListener('dragend', (e) => e.target.classList.remove('dragging'));
+            });
+            dropZones.forEach(zone => {
+                zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+                zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+                zone.addEventListener('drop', e => {
+                    e.preventDefault();
+                    zone.classList.remove('drag-over');
+                    const draggedId = e.dataTransfer.getData('text');
+                    const draggedElement = document.getElementById(draggedId);
+                    if (zone.children.length > 0) { document.getElementById('draggable-steps-container').appendChild(zone.children[0]); }
+                    zone.innerHTML = '';
+                    zone.appendChild(draggedElement);
+                    draggedElement.className = 'bg-white p-3 rounded-lg shadow border';
+                    playDropSound();
+                });
+            });
+        }
+        function checkAlgoOrder() {
+            const dropZones = document.querySelectorAll('#recipe-box .drop-zone');
+            let correctCount = 0;
+            let allFilled = true;
+            dropZones.forEach(zone => {
+                zone.classList.remove('correct', 'incorrect');
+                if (zone.children.length === 0) { allFilled = false; return; }
+                const child = zone.children[0];
+                if (zone.dataset.order === child.dataset.order) {
+                    correctCount++;
+                    zone.classList.add('correct');
+                } else {
+                    zone.classList.add('incorrect');
+                }
+            });
+            const feedbackEl = document.getElementById('algo-feedback');
+            if (!allFilled) {
+                feedbackEl.textContent = "Oops, masih ada langkah yang kosong!";
+                feedbackEl.className = "mt-6 text-center font-semibold h-6 text-amber-600";
+                return;
+            }
+            if (correctCount === algoSteps.length) {
+                feedbackEl.textContent = "Luar biasa! Urutanmu benar!";
+                feedbackEl.className = "mt-6 text-center font-semibold h-6 text-green-600";
+                document.getElementById('to-symbols-btn').classList.remove('hidden');
+                document.getElementById('check-algo-btn').classList.add('hidden');
+                playWinSound();
+            } else {
+                feedbackEl.textContent = `Hampir benar! ${correctCount} dari ${algoSteps.length} langkah tepat.`;
+                feedbackEl.className = "mt-6 text-center font-semibold h-6 text-red-600";
+                playFailureSound();
+            }
+        }
+        function resetAlgoChallenge() {
+            document.querySelectorAll('#recipe-box .drop-zone').forEach((zone, i) => {
+                zone.innerHTML = `${i+1}. Langkah ke-${i+1}...`;
+                zone.className = 'drop-zone p-4 rounded-lg text-center text-slate-500';
+            });
+            document.getElementById('algo-feedback').textContent = '';
+            document.getElementById('to-symbols-btn').classList.add('hidden');
+            document.getElementById('check-algo-btn').classList.remove('hidden');
+            initializeAlgoChallenge();
+        }
+
+        // --- Logic: Galeri Simbol ---
+        const symbols = [
+            { name: 'Terminator', shape: `<ellipse cx="80" cy="40" rx="70" ry="30" class="flowchart-symbol"/>`, description: 'Menandakan titik awal (Start) atau akhir (End) dari sebuah alur proses.' },
+            { name: 'Process', shape: `<rect x="10" y="10" width="140" height="60" rx="5" class="flowchart-symbol"/>`, description: 'Menunjukkan sebuah tindakan atau operasi. Biasanya berisi kata kerja.' },
+            { name: 'Input/Output', shape: `<polygon points="25,10 150,10 135,70 10,70" class="flowchart-symbol"/>`, description: 'Untuk proses memasukkan data (input) atau menampilkan informasi (output).' },
+            { name: 'Decision', shape: `<polygon points="80,5 155,40 80,75 5,40" class="flowchart-symbol"/>`, description: 'Menunjukkan kondisi yang memerlukan keputusan (Ya/Tidak).' }
+        ];
+        function initializeSymbolGallery() {
+            const container = document.getElementById('symbol-gallery-container');
+            container.innerHTML = '';
+            symbols.forEach(symbol => {
+                const cardHTML = `
+                    <div class="relative w-full h-52 cursor-pointer" style="perspective: 1000px;" onclick="this.children[0].classList.toggle('rotate-y-180')">
+                        <div class="relative w-full h-full transition-transform duration-700" style="transform-style: preserve-3d;">
+                            <div class="absolute w-full h-full bg-white rounded-xl shadow-md border p-4 flex flex-col items-center justify-center" style="backface-visibility: hidden;">
+                                <svg viewBox="0 0 160 80" class="h-24 w-48">${symbol.shape}</svg>
+                                <p class="font-bold mt-2 text-lg">${symbol.name}</p>
+                            </div>
+                            <div class="absolute w-full h-full bg-blue-500 text-white rounded-xl shadow-lg p-4 flex flex-col items-center justify-center" style="backface-visibility: hidden; transform: rotateY(180deg);">
+                                <p class="font-bold text-xl">${symbol.name}</p>
+                                <p class="text-sm text-center mt-2">${symbol.description}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += cardHTML;
+            });
+        }
+
+        // --- Logic: Tantangan Flowchart ---
+        const flowchartComponents = {
+            symbols: [
+                { id: 's-term1', type: 'terminator', content: `<ellipse cx="80" cy="40" rx="75" ry="35" class="flowchart-symbol"/>`},
+                { id: 's-term2', type: 'terminator', content: `<ellipse cx="80" cy="40" rx="75" ry="35" class="flowchart-symbol"/>`},
+                { id: 's-io1', type: 'input-output', content: `<polygon points="25,10 155,10 130,70 5,70" class="flowchart-symbol"/>`},
+                { id: 's-io2', type: 'input-output', content: `<polygon points="25,10 155,10 130,70 5,70" class="flowchart-symbol"/>`},
+                { id: 's-io3', type: 'input-output', content: `<polygon points="25,10 155,10 130,70 5,70" class="flowchart-symbol"/>`},
+                { id: 's-dec1', type: 'decision', content: `<polygon points="80,5 155,45 80,85 5,45" class="flowchart-symbol"/>`},
+            ],
+            texts: [
+                { id: 't1', type: 'Mulai', content: 'Mulai' },
+                { id: 't2', type: 'Input Username & Password', content: 'Input Username & Password' },
+                { id: 't3', type: 'Apakah data valid?', content: 'Apakah data valid?' },
+                { id: 't4', type: 'Tampilkan Pesan \'Login Berhasil\'', content: 'Tampilkan Pesan \'Login Berhasil\'' },
+                { id: 't5', type: 'Selesai', content: 'Selesai' },
+                { id: 't6', type: 'Tampilkan Pesan \'Login Gagal\'', content: 'Tampilkan Pesan \'Login Gagal\'' },
+            ]
+        };
+        function initializeFlowchartChallenge() {
+            const bank = document.getElementById('component-bank');
+            bank.innerHTML = '';
+            const allComponents = [ ...flowchartComponents.symbols.map(s => ({...s, isSymbol: true})), ...flowchartComponents.texts.map(t => ({...t, isText: true})) ];
+            shuffleArray(allComponents);
+            allComponents.forEach(item => {
+                const div = document.createElement('div');
+                div.id = item.id;
+                div.draggable = true;
+                div.dataset.type = item.type;
+                if (item.isSymbol) {
+                    div.className = 'draggable p-2 bg-white rounded-md border shadow-sm flex items-center justify-center h-20';
+                    div.innerHTML = `<svg viewBox="0 0 160 90" class="h-16 w-full">${item.content}</svg>`;
+                    div.dataset.isSymbol = true;
+                } else {
+                    div.className = 'draggable bg-white p-2 text-center rounded-md border shadow-sm text-xs font-semibold flex items-center justify-center h-20';
+                    div.textContent = item.content;
+                    div.dataset.isText = true;
+                }
+                bank.appendChild(div);
+            });
+            addFlowchartDragListeners();
+        }
+        function addFlowchartDragListeners() {
+            const draggables = document.querySelectorAll('#component-bank .draggable');
+            const dropZones = document.querySelectorAll('#flowchart-canvas .flowchart-drop-zone');
+            draggables.forEach(draggable => {
+                draggable.addEventListener('dragstart', e => { e.target.classList.add('dragging'); e.dataTransfer.setData('text/plain', e.target.id); });
+                draggable.addEventListener('dragend', e => e.target.classList.remove('dragging'));
+            });
+            dropZones.forEach(zone => {
+                zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+                zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+                zone.addEventListener('drop', e => {
+                    e.preventDefault();
+                    zone.classList.remove('drag-over');
+                    const id = e.dataTransfer.getData('text');
+                    const draggedElement = document.getElementById(id);
+                    const isSymbol = draggedElement.dataset.isSymbol === 'true';
+                    const hasSymbol = zone.querySelector('[data-is-symbol]');
+                    const hasText = zone.querySelector('[data-is-text]');
+                    if ((isSymbol && hasSymbol) || (!isSymbol && hasText)) return;
+                    const isCorrect = (isSymbol && draggedElement.dataset.type === zone.dataset.expectedSymbol) || (!isSymbol && draggedElement.dataset.type === zone.dataset.expectedText);
+                    if (isCorrect) {
+                        playSound("C5", "16n");
+                        zone.classList.add('correct-drop');
+                        setTimeout(() => zone.classList.remove('correct-drop'), 500);
+                    } else {
+                        playFailureSound();
+                        zone.classList.add('incorrect-drop');
+                        setTimeout(() => zone.classList.remove('incorrect-drop'), 500);
+                        return;
+                    }
+                    zone.appendChild(draggedElement);
+                    draggedElement.className = isSymbol 
+                        ? 'h-full w-full absolute top-0 left-0 z-0 p-1' 
+                        : 'h-full w-full absolute top-0 left-0 z-10 flex items-center justify-center text-center font-bold text-sm p-2';
+                    if(isSymbol) {
+                        // No need to rewrite innerHTML, it's already correct
+                    }
+                    zone.style.border = 'none';
+                    zone.style.position = 'relative';
+                });
+            });
+        }
+        function checkFlowchart() {
+            const dropZones = document.querySelectorAll('#flowchart-canvas .flowchart-drop-zone');
+            let correctCount = 0;
+            let allFilled = true;
+            dropZones.forEach(zone => {
+                const symbol = zone.querySelector('[data-is-symbol]');
+                const text = zone.querySelector('[data-is-text]');
+                if (!symbol || !text) { allFilled = false; return; }
+                const symbolType = symbol.dataset.type;
+                const textType = text.dataset.type;
+                if (symbolType === zone.dataset.expectedSymbol && textType === zone.dataset.expectedText) { correctCount++; }
+            });
+            const feedbackEl = document.getElementById('flowchart-feedback');
+            if (!allFilled) {
+                feedbackEl.textContent = "Masih ada bagian yang kosong. Lengkapi dulu ya!";
+                feedbackEl.className = "mt-8 text-center font-semibold h-6 text-amber-600";
+                return;
+            }
+            if (correctCount === dropZones.length) {
+                feedbackEl.textContent = "SEMPURNA! Kamu memang perancang sistem handal!";
+                feedbackEl.className = "mt-8 text-center font-semibold h-6 text-green-600";
+                playWinSound();
+                document.getElementById('ai-explain-btn').classList.remove('hidden');
+                setTimeout(() => changeScreen('screen-end'), 2500);
+            } else {
+                feedbackEl.textContent = `Kamu hebat! ${correctCount} dari ${dropZones.length} bagian benar. Coba lagi!`;
+                feedbackEl.className = "mt-8 text-center font-semibold h-6 text-red-600";
+                playFailureSound();
+            }
+        }
+        function resetFlowchart() {
+            document.querySelectorAll('#flowchart-canvas .flowchart-drop-zone').forEach(zone => {
+                zone.innerHTML = '';
+                zone.style.border = '2px dashed #94a3b8';
+                zone.style.position = 'static';
+            });
+            document.getElementById('flowchart-feedback').textContent = '';
+            document.getElementById('ai-explain-btn').classList.add('hidden');
+            initializeFlowchartChallenge();
+        }
+
+        // --- Gemini API Integration ---
+        const modal = document.getElementById('ai-modal');
+        const modalBody = document.getElementById('ai-modal-body');
+        const newIdeaContainer = document.getElementById('new-idea-container');
+
+        function closeModal() {
+            modal.classList.remove('visible');
+        }
+
+        async function callGemini(prompt) {
+            const apiKey = ""; // Di sini
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{
+                    role: "user",
+                    parts: [{ text: prompt }]
+                }]
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0 && result.candidates[0].content.parts.length > 0) {
+                    return result.candidates[0].content.parts[0].text;
+                } else {
+                    return "Tidak bisa mendapatkan respons dari AI saat ini.";
+                }
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                return "Terjadi kesalahan saat menghubungi AI. Coba lagi nanti.";
+            }
+        }
+
+        async function getAiExplanation() {
+            modal.classList.add('visible');
+            modalBody.innerHTML = `<div class="flex justify-center items-center h-32"><div class="loader"></div></div>`;
+            
+            const prompt = "Jelaskan alur logika dari sebuah flowchart untuk proses login ke akun media sosial dalam bahasa Indonesia yang mudah dipahami untuk siswa SMK. Gunakan poin-poin atau daftar bernomor.";
+            const explanation = await callGemini(prompt);
+            
+            modalBody.innerHTML = `<p class="text-slate-700 whitespace-pre-wrap">${explanation}</p>`;
+        }
+
+        async function getNewFlowchartIdea() {
+            newIdeaContainer.innerHTML = 'Mencari ide...';
+            const prompt = "Berikan satu ide aktivitas sehari-hari yang menarik untuk dibuatkan flowchart oleh siswa SMK. Berikan hanya nama aktivitasnya saja dalam 3-5 kata, tanpa penjelasan tambahan. Contoh: Proses membeli tiket bioskop online";
+            const idea = await callGemini(prompt);
+            newIdeaContainer.textContent = idea;
+        }
+
+
+        // --- Initial Load ---
+        window.onload = () => {
+            initializeAlgoChallenge();
+            initializeSymbolGallery();
+            initializeFlowchartChallenge();
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+        };
+    </script>
+</body>
+</html>
