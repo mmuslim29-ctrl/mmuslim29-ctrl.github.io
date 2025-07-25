@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Pembelajaran Mendalam: Algoritma & Flowchart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f0f4f8;
+            --text-color: #334155;
+            --card-bg: white;
+            --header-color: #1e293b;
+            --accent-1: #43AA8B;
+            --accent-2: #F9C74F;
+            --button-bg: linear-gradient(135deg, #f9a8d4, #c084fc);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        .slide-container {
+            width: 100%;
+            max-width: 1000px;
+            height: 90vh;
+            max-height: 720px;
+            background-color: var(--card-bg);
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .slide {
+            width: 100%;
+            height: 100%;
+            padding: 2.5rem 4rem 6rem 4rem; /* Menambah padding bawah untuk ruang scroll */
+            display: none;
+            flex-direction: column;
+            justify-content: center; /* Kembali ke center untuk sebagian besar slide */
+            align-items: center;
+            text-align: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            overflow-y: auto; /* Memastikan scroll aktif jika konten meluap */
+        }
+        .slide.scrollable {
+             justify-content: flex-start; /* Khusus untuk slide yang butuh scroll */
+        }
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            z-index: 10;
+        }
+        .nav-button {
+            position: absolute;
+            bottom: 2rem;
+            z-index: 20;
+            background-color: #3b82f6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .nav-button:hover { background-color: #2563eb; transform: translateY(-2px); }
+        #prev { left: 2rem; }
+        #next { right: 2rem; }
+        .slide-counter { position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%); z-index: 20; font-size: 0.875rem; color: #64748b; }
+        h1 { font-weight: 900; font-size: 3.5rem; line-height: 1.1; color: var(--header-color); }
+        h2 { font-weight: 700; font-size: 2.25rem; margin-bottom: 1rem; color: var(--header-color); flex-shrink: 0; }
+        p { font-size: 1.1rem; line-height: 1.6; max-width: 90%; flex-shrink: 0; }
+        .list-item { display: flex; align-items: flex-start; gap: 1rem; font-size: 1.1rem; margin-bottom: 1rem; text-align: left; max-width: 80%; }
+        .list-icon { font-size: 1.5rem; flex-shrink: 0; color: #3b82f6; }
+        .gemini-button {
+            background: var(--button-bg);
+            color: white; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: bold; cursor: pointer;
+            transition: all 0.3s; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border: none; margin-top: 1rem; font-size: 0.875rem;
+        }
+        .gemini-button:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
+        .gemini-button:disabled { background: #d1d5db; cursor: not-allowed; }
+        .ai-output-box { margin-top: 1rem; padding: 1rem; background-color: var(--bg-color); border-radius: 0.75rem; border: 1px solid #e2e8f0; width: 100%; text-align: left; white-space: pre-wrap; font-family: monospace; font-size: 0.875rem; max-height: 150px; overflow-y: auto; }
+        .quiz-option label { display: block; padding: 0.75rem 1.25rem; border: 2px solid #e2e8f0; border-radius: 0.75rem; cursor: pointer; transition: all 0.2s; }
+        .quiz-option input:checked + label { border-color: var(--accent-1); background-color: #f0fdf4; font-weight: bold; }
+        .quiz-option.correct label { border-color: #16a34a; background-color: #dcfce7; }
+        .quiz-option.incorrect label { border-color: #dc2626; background-color: #fee2e2; }
+        .tree-container { width: 100%; height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+        .tree-canopy { width: 100%; max-width: 300px; height: 220px; background-color: var(--accent-1); border-radius: 50% 50% 20% 20% / 60% 60% 40% 40%; position: relative; }
+        .tree-trunk { width: 30px; height: 80px; background-color: #8d5524; }
+        .wish-leaf { position: absolute; background-color: var(--accent-2); color: #5c3c00; padding: 6px 10px; border-radius: 50% 0; font-size: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); transition: transform 0.5s ease-out; transform: scale(0); }
+        .rating-emoticons span { font-size: 2.5rem; cursor: pointer; transition: transform 0.2s, filter 0.2s; filter: grayscale(80%); opacity: 0.6; }
+        .rating-emoticons span.selected, .rating-emoticons span:hover { transform: scale(1.2); filter: grayscale(0%); opacity: 1; }
+        .stop-card { opacity: 0; transform: translateY(20px); transition: opacity 0.5s, transform 0.5s; }
+        .stop-card.visible { opacity: 1; transform: translateY(0); }
+        .theme-switcher { position: fixed; top: 1rem; right: 1rem; z-index: 50; }
+        .profile-card { position: fixed; top: 1rem; left: 1rem; z-index: 50; background-color: var(--card-bg); padding: 0.5rem 1rem; border-radius: 9999px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); font-size: 0.875rem; }
+        
+        /* Ice Breaker Styles */
+        #freestyle-sequence-display { background-color: #f3f4f6; border-radius: 0.75rem; padding: 1.5rem; min-height: 200px; width: 100%; max-width: 600px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .action-item { display: flex; align-items: center; gap: 1rem; background-color: white; padding: 0.75rem 1.5rem; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; opacity: 0; transform: translateY(20px); animation: pop-in 0.5s ease-out forwards; }
+        .action-item .emoji { font-size: 2.5rem; }
+        @keyframes pop-in { from { opacity: 0; transform: translateY(20px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        #freestyle-result { font-size: 1.5rem; font-weight: bold; color: var(--accent-1); opacity: 0; transition: opacity 0.5s; }
+
+        /* CT Slide Styles */
+        .ct-container { display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; max-width: 800px; }
+        .ct-card { background-color: #f3f4f6; border-radius: 1rem; padding: 1rem; text-align: center; flex: 1; }
+        .ct-card .icon { font-size: 2.5rem; }
+        .ct-card h3 { font-weight: 700; margin-top: 0.5rem; font-size: 1rem; color: var(--header-color); }
+        .ct-card p { font-size: 0.8rem; line-height: 1.4; }
+        .ct-arrow { font-size: 2rem; color: #9ca3af; font-weight: bold; }
+        .ct-card.highlight { background-color: var(--accent-1); color: white; }
+        .ct-card.highlight h3, .ct-card.highlight p { color: white; }
+
+        /* Flowchart Symbol Styles */
+        .symbol-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; width: 100%; max-width: 900px; margin-top: 1.5rem; }
+        .symbol-card { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .symbol-card svg { height: 60px; margin-bottom: 1rem; }
+        .symbol-card h4 { font-weight: bold; font-size: 1.1rem; color: var(--header-color); }
+        .symbol-card p { font-size: 0.9rem; }
+        .flowchart-svg { stroke: #334155; stroke-width: 8; fill: #e0f2fe; }
+        
+        /* Flowchart Example Styles */
+        .flow-diagram { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+        .flow-shape { display: flex; align-items: center; justify-content: center; color: #1e293b; font-weight: 500; font-size: 0.9rem; padding: 0 1rem; text-align: center; }
+        .flow-shape svg { filter: drop-shadow(0 4px 6px rgb(0 0 0 / 0.1)); }
+        .flow-terminator { width: 150px; height: 60px; }
+        .flow-process { width: 180px; height: 70px; }
+        .flow-io { width: 190px; height: 60px; }
+        .flow-decision { width: 200px; height: 90px; }
+        .flow-arrow { height: 30px; color: #64748b; }
+
+        /* Evaluasi Styles */
+        .eval-button { cursor: pointer; font-weight: 500; }
+        .eval-button.selected { border-color: var(--accent-1); background-color: #f0fdf4; font-weight: bold; color: var(--accent-1); }
+    </style>
+</head>
+<body>
+    <div class="profile-card">
+        🏆 Level: <span id="level-display" class="font-bold">Pemula</span> | ✨ Poin: <span id="points-display" class="font-bold">0</span>
+    </div>
+    <div class="theme-switcher">
+        <select id="theme-switcher" class="p-1 rounded-md border-2">
+            <option value="default">Tema Default</option>
+            <option value="dark">Hutan Malam</option>
+            <option value="beach">Pantai Senja</option>
+        </select>
+    </div>
+
+    <div class="slide-container">
+
+        <!-- Slide 1: Pembukaan Interaktif -->
+        <div class="slide" style="background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);">
+            <div class="text-white text-center">
+                <h2 id="greeting" class="text-4xl font-bold">Selamat Pagi!</h2>
+                <p class="text-xl mt-2">Mari kita mulai pembelajaran hari ini dengan semangat 🔥</p>
+                <div class="mt-8 bg-black bg-opacity-20 px-6 py-3 rounded-xl">
+                    <p id="date-display" class="text-lg"></p>
+                    <p id="time-display" class="text-3xl font-bold"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Bagaimana Perasaanmu? -->
+        <div class="slide">
+            <h2>Bagaimana Perasaanmu Hari Ini?</h2>
+            <p class="mb-6 max-w-2xl">Pilih satu emotikon yang paling mewakili perasaanmu saat ini untuk memulai belajar.</p>
+            <div id="feeling-emoticons" class="rating-emoticons flex justify-center gap-4 md:gap-8">
+                <span data-value="1" title="Bersemangat">🤩</span>
+                <span data-value="2" title="Senang">😊</span>
+                <span data-value="3" title="Biasa Saja">😐</span>
+                <span data-value="4" title="Bingung">🤔</span>
+                <span data-value="5" title="Lelah">😴</span>
+            </div>
+            <p id="feeling-feedback" class="mt-6 text-lg font-semibold text-blue-600 opacity-0 transition-opacity duration-500"></p>
+        </div>
+
+        <!-- Slide 3: Teknik STOP -->
+        <div class="slide">
+            <h2>Mari Berlatih Fokus dengan Teknik S.T.O.P</h2>
+            <p class="mb-4 max-w-3xl">Kita akan jeda sejenak untuk melatih fokus kita. Ikuti panduan ini.</p>
+            <div id="stop-container" class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+                <div id="stop-s" class="stop-card bg-blue-100 p-4 rounded-lg"><h3 class="font-black text-3xl text-blue-800">S</h3><p class="font-bold">Stop</p><p class="text-sm">Berhenti sejenak.</p></div>
+                <div id="stop-t" class="stop-card bg-green-100 p-4 rounded-lg"><h3 class="font-black text-3xl text-green-800">T</h3><p class="font-bold">Take a Breath</p><p class="text-sm">Tarik napas dalam.</p></div>
+                <div id="stop-o" class="stop-card bg-yellow-100 p-4 rounded-lg"><h3 class="font-black text-3xl text-yellow-800">O</h3><p class="font-bold">Observe</p><p class="text-sm">Amati perasaanmu.</p></div>
+                <div id="stop-p" class="stop-card bg-purple-100 p-4 rounded-lg"><h3 class="font-black text-3xl text-purple-800">P</h3><p class="font-bold">Proceed</p><p class="text-sm">Lanjutkan.</p></div>
+            </div>
+            <button id="start-stop-btn" class="gemini-button mt-6">Mulai Latihan S.T.O.P</button>
+        </div>
+
+        <!-- Slide 4: Agenda Pembelajaran-->
+        <div class="slide">
+            <h2>Agenda Pembelajaran</h2>
+            <div class="w-full max-w-3xl mt-4 text-left space-y-2">
+                <p class="list-item"><span class="list-icon">🧘</span><span>Latihan Fokus dengan Teknik S.T.O.P</span></p>
+                <p class="list-item"><span class="list-icon">🔗</span><span>Review Materi Sebelumnya</span></p>
+                <p class="list-item"><span class="list-icon">🔍</span><span>Asesmen Awal & Tujuan Pembelajaran</span></p>
+                <p class="list-item"><span class="list-icon">❓</span><span>Pertanyaan Pemantik & Misi Belajar</span></p>
+                <p class="list-item"><span class="list-icon">🧠</span><span>Membedah Konsep Algoritma & Flowchart</span></p>
+                <p class="list-item"><span class="list-icon">🚀</span><span>Tantangan Proyek & Pembagian Kelompok</span></p>
+                <p class="list-item"><span class="list-icon">💡</span><span>Presentasi & Umpan Balik</span></p>
+                <p class="list-item"><span class="list-icon">🖼️</span><span>Sesi Gallery Walk & Apresiasi Rekan</span></p>
+                <p class="list-item"><span class="list-icon">🏆</span><span>Kuis Asesmen Sumatif & Naik Level</span></p>
+                <p class="list-item"><span class="list-icon">🌳</span><span>Refleksi & Pohon Harapan</span></p>
+                <p class="list-item"><span class="list-icon">🤔</span><span>Evaluasi Pengalaman Belajar</span></p>
+            </div>
+        </div>
+
+        <!-- Slide 5: Korelasi dengan Berpikir Komputasional -->
+        <div class="slide">
+            <h2>Koneksi ke "Berpikir Komputasional"</h2>
+            <p class="mb-6 max-w-3xl">Ingat materi sebelumnya? Algoritma adalah hasil akhir dari proses Berpikir Komputasional (BK)!</p>
+            <div class="ct-container">
+                <div class="ct-card"><div class="icon">🧩</div><h3>Dekomposisi</h3><p>Memecah masalah</p></div>
+                <div class="ct-arrow">→</div>
+                <div class="ct-card"><div class="icon">🎨</div><h3>Pengenalan Pola</h3><p>Mencari kesamaan</p></div>
+                <div class="ct-arrow">→</div>
+                <div class="ct-card"><div class="icon">🗑️</div><h3>Abstraksi</h3><p>Fokus pada inti</p></div>
+                <div class="ct-arrow">→</div>
+                <div class="ct-card highlight"><div class="icon">📝</div><h3>Algoritma</h3><p>Menyusun solusi</p></div>
+            </div>
+            <p class="mt-6 max-w-3xl">Kita menggunakan 3 pilar pertama BK untuk menganalisis masalah, lalu pilar ke-4 (Algoritma) adalah cara kita menuliskan solusinya secara terstruktur.</p>
+        </div>
+
+        <!-- Slide 6: Judul Materi Inti -->
+        <div class="slide active" style="background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);">
+            <div class="text-white">
+                <p class="font-bold text-xl mb-4">Dasar-dasar Pengembangan Perangkat Lunak & Gim</p>
+                <h1 class="text-5xl md:text-6xl">Algoritma & Flowchart</h1>
+                <p class="text-2xl mt-6">Merancang Logika Secara Visual</p>
+            </div>
+        </div>
+
+        <!-- Slide 7: Tujuan Pembelajaran -->
+        <div class="slide">
+            <h2>Tujuan Pembelajaran</h2>
+            <p class="mb-6 max-w-4xl">Di akhir sesi ini, kalian diharapkan mampu:</p>
+            <div class="w-full max-w-3xl mt-4 text-left space-y-2">
+                 <p class="list-item bg-blue-50 p-3 rounded-lg"><span class="list-icon">🤔</span><span>**Menganalisis** masalah sederhana dan memecahnya menjadi langkah-langkah logis.</span></p>
+                 <p class="list-item bg-green-50 p-3 rounded-lg"><span class="list-icon">✍️</span><span>**Merancang** sebuah flowchart sistematis menggunakan simbol standar.</span></p>
+                 <p class="list-item bg-yellow-50 p-3 rounded-lg"><span class="list-icon">🤝</span><span>**Berkolaborasi** secara efektif dalam kelompok untuk menghasilkan karya flowchart.</span></p>
+            </div>
+        </div>
+
+        <!-- Slide 8: Asesmen Diagnostik -->
+        <div class="slide">
+            <h2>Cek Pemahaman Awal</h2>
+            <p class="mb-6 max-w-2xl">Jawab pertanyaan singkat ini untuk mengukur pemahaman awalmu tentang logika berurutan. (Tidak dinilai)</p>
+            <div class="w-full max-w-2xl text-left bg-slate-50 p-6 rounded-lg">
+                <p class="font-bold mb-3">Kamu ingin mengirim pesan WhatsApp ke teman. Manakah urutan langkah yang paling logis?</p>
+                <div class="space-y-2">
+                    <div class="quiz-option"><input type="radio" name="diag" id="diag-a" class="hidden"><label for="diag-a">A. Tekan Kirim -> Ketik Pesan -> Buka Aplikasi</label></div>
+                    <div class="quiz-option"><input type="radio" name="diag" id="diag-b" class="hidden"><label for="diag-b">B. Buka Aplikasi -> Cari Teman -> Ketik Pesan -> Tekan Kirim</label></div>
+                    <div class="quiz-option"><input type="radio" name="diag" id="diag-c" class="hidden"><label for="diag-c">C. Cari Teman -> Tekan Kirim -> Buka Aplikasi</label></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: Pertanyaan Pemantik -->
+        <div class="slide">
+            <!-- <h2>Pertanyaan Pemantik</h2> -->
+            <svg viewBox="0 0 200 150" class="h-40 mb-4">
+                <!-- Robot -->
+                <rect x="70" y="50" width="60" height="70" rx="5" fill="#d1d5db" stroke="#6b7280" stroke-width="2"/>
+                <rect x="60" y="25" width="80" height="40" rx="5" fill="#e5e7eb" stroke="#6b7280" stroke-width="2"/>
+                <circle cx="85" cy="45" r="4" fill="#3b82f6"/>
+                <circle cx="115" cy="45" r="4" fill="#3b82f6"/>
+                <line x1="100" y1="25" x2="100" y2="15" stroke="#6b7280" stroke-width="2"/>
+                <circle cx="100" cy="12" r="3" fill="#ef4444"/>
+                <!-- Kopi -->
+                <g transform="translate(20, 90)">
+                    <path d="M 0 0 H 30 V 25 H 0 Z" fill="#fff" stroke="#6b7280" stroke-width="2"/>
+                    <path d="M 30 5 C 38 5, 38 20, 30 20" fill="none" stroke="#6b7280" stroke-width="2"/>
+                    <path d="M 5 -2 C 7 -8, 13 -8, 15 -2" stroke="#9ca3af" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                    <path d="M 18 -2 C 20 -8, 26 -8, 28 -2" stroke="#9ca3af" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                </g>
+                <!-- Tanda Plus -->
+                <path d="M 155 80 L 175 80 M 165 70 L 165 90" stroke="#9ca3af" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+            <p class="max-w-3xl mb-4">Bayangkan kamu punya robot canggih. Kamu mau minta tolong dia buatin secangkir kopi. <strong>Perintah apa saja yang harus kamu berikan agar kopinya sempurna dan robotnya tidak error?</strong></p>
+            <textarea class="w-full max-w-lg p-2 border rounded-lg text-sm" rows="3" placeholder="Tulis urutan perintahmu di sini...&#10;Contoh: 1. Ambil cangkir, 2. Masukkan kopi..."></textarea>
+            <div class="mt-4 bg-blue-50 p-4 rounded-lg max-w-3xl text-sm text-left">
+                <p><strong>Apa yang terjadi jika urutannya salah?</strong> Misalnya, menuang air panas dulu baru kopi? Atau lupa memasukkan gula? Pasti hasilnya tidak sesuai, kan?</p>
+                <p class="mt-2 font-bold">Tanpa sadar, kamu barusan sedang merancang sebuah ALGORITMA!</p>
+            </div>
+        </div>
+
+        <!-- Slide 10 s/d 13: Materi Inti -->
+        <div class="slide"><h2>Apa Itu Algoritma?</h2><p class="max-w-3xl">Algoritma adalah **resep masakan untuk komputer**. Ini adalah serangkaian instruksi langkah-demi-langkah yang logis dan berurutan untuk menyelesaikan suatu masalah.</p><button id="real-world-btn" class="gemini-button">✨ Beri Contoh di Dunia Nyata</button><div id="real-world-output" class="ai-output-box hidden"></div></div>
+        <div class="slide"><h2>Prinsip Algoritma yang Baik</h2><p class="mb-6 max-w-4xl">Tidak semua urutan langkah bisa disebut algoritma yang baik. Berikut adalah ciri-cirinya:</p><div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-5xl"><div class="bg-slate-50 p-4 rounded-lg"><h3 class="font-bold text-lg">Jelas & Tidak Ambigu</h3><p class="text-sm">Setiap instruksi harus memiliki satu makna yang pasti.</p></div><div class="bg-slate-50 p-4 rounded-lg"><h3 class="font-bold text-lg">Punya Input & Output</h3><p class="text-sm">Ada data awal yang diolah dan ada hasil akhir yang jelas.</p></div><div class="bg-slate-50 p-4 rounded-lg"><h3 class="font-bold text-lg">Harus Berhenti (Finite)</h3><p class="text-sm">Algoritma harus berakhir setelah sejumlah langkah tertentu.</p></div></div></div>
+        
+        <div class="slide">
+            <h2>Lalu, Apa Itu Flowchart?</h2>
+            <p class="max-w-3xl">Jika algoritma adalah resepnya, maka flowchart adalah **peta visual dari resep** tersebut. Ia menggunakan simbol standar untuk menggambarkan alur logika.</p>
+            <!-- <div class="mt-6">
+                <svg viewBox="0 0 200 100" class="h-28">
+                    <rect x="5" y="5" width="190" height="90" rx="10" class="flowchart-svg"/>
+                    <text x="100" y="58" text-anchor="middle" font-family="Inter, sans-serif" font-size="20" fill="#1e293b">Lakukan Proses</text>
+                </svg>
+            </div> -->
+            <div class="mt-24">
+                <a href="interaktif.html" target="_blank" class="gemini-button">✨ Petualangan Logika ✨</a>
+            </div>
+        </div>
+
+        <div class="slide" style="background: #e3eeff;"><h2 class="text-3xl md:text-4xl">🚀 Misi Kita Hari Ini 🚀</h2><div class="bg-white p-6 rounded-2xl shadow-lg mt-4"><p class="text-xl font-bold text-slate-800">Menjadi <strong>System Analyst Junior</strong>, kita akan merancang 'peta jalan' logika (Flowchart). Kita akan bekerja dalam tim, dan yang dinilai bukan hanya hasil akhir, tapi juga <strong>kekompakan dan keaktifan</strong> kalian!</p></div></div>
+
+        <!-- Slide 14: Ice Breaker Baru (Fisik) -->
+        <div class="slide">
+            <h2>Ice Breaking: Algoritma Gaya Bebas!</h2>
+            <p class="mb-4 max-w-2xl">Ikuti urutan gerakan (algoritma) yang muncul di layar untuk pemanasan! Siap?</p>
+            <div id="freestyle-sequence-display">
+                <p id="freestyle-placeholder" class="text-slate-500">Gerakan akan muncul di sini...</p>
+                <div id="freestyle-result"></div>
+            </div>
+            <button id="start-freestyle-btn" class="gemini-button">Mulai Gerakan!</button>
+        </div>
+
+        <!-- Slide 15: Pembagian Kelompok -->
+        <div class="slide scrollable">
+            <h2>Pembagian Kelompok Proyek</h2>
+            <p class="mb-4 max-w-2xl">Masukkan nama semua siswa dipisahkan koma, lalu klik tombol untuk membuat kelompok secara acak!</p>
+            <div class="w-full max-w-3xl">
+                <textarea id="student-names" rows="3" class="w-full p-2 border border-slate-300 rounded-lg" placeholder="Contoh: Budi, Ani, Candra, Dewi, Eka, Fajar, ..."></textarea>
+                <div class="flex items-center justify-center gap-4 my-2">
+                    <label for="group-size">Jumlah anggota per kelompok:</label>
+                    <input type="number" id="group-size" value="6" class="w-20 p-2 border border-slate-300 rounded-lg text-center">
+                </div>
+                <button id="generate-groups-btn" class="gemini-button">Buat Kelompok!</button>
+                <div id="group-output" class="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4 text-left"></div>
+            </div>
+        </div>
+
+        <!-- Slide 16: Langkah Proyek Cerdas -->
+        <div class="slide"><h2>Langkah Proyek Cerdas</h2><div class="flex flex-col md:flex-row gap-4 mt-2 w-full max-w-6xl"><div class="flex-1 bg-slate-50 p-4 rounded-xl text-center"><div class="text-3xl mb-2">1️⃣</div><h3 class="font-bold text-lg mb-2">Cari Ide Topik</h3><button id="idea-btn" class="gemini-button">✨ Cari Ide</button><div id="idea-output" class="ai-output-box hidden"></div></div><div class="flex-1 bg-slate-50 p-4 rounded-xl text-center"><div class="text-3xl mb-2">2️⃣</div><h3 class="font-bold text-lg mb-2">Uraikan Langkah</h3><input type="text" id="topic-input" class="topic-input" placeholder="Ketik topikmu di sini..."><button id="steps-btn" class="gemini-button">✨ Uraikan Langkahnya</button><div id="steps-output" class="ai-output-box hidden"></div></div><div class="flex-1 bg-slate-50 p-4 rounded-xl text-center"><div class="text-3xl mb-2">3️⃣</div><h3 class="font-bold text-lg mb-2">Gambar Flowchart</h3><p class="text-sm">Gunakan hasil dari AI sebagai panduan untuk menggambar flowchart kreatifmu di kertas plano.</p></div></div></div>
+        
+        <!-- Slide 17: Zona Umpan Balik AI -->
+        <div class="slide">
+            <h2>Zona Umpan Balik AI</h2>
+            <p class="mb-4 max-w-3xl">Ketikkan urutan langkah (algoritma) yang sudah kamu rancang di bawah ini, lalu minta masukan dari Asisten AI!</p>
+            <div class="w-full max-w-2xl">
+                <textarea id="feedback-input" rows="4" class="w-full p-2 border border-slate-300 rounded-lg" placeholder="Contoh: 1. Mulai, 2. Siapkan gelas, 3. Tuang kopi..."></textarea>
+                <button id="feedback-btn" class="gemini-button">✨ Analisis Logikaku</button>
+                <div id="feedback-output" class="ai-output-box hidden"></div>
+            </div>
+        </div>
+
+        <!-- Slide 18: Gallery Walk -->
+        <div class="slide">
+            <h2>Sesi Gallery Walk</h2>
+            <svg class="h-40 mb-4" viewBox="0 0 200 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="20" y="30" width="160" height="90" rx="8" fill="#f3f4f6"/>
+                <path d="M20 38C20 33.5817 23.5817 30 28 30H172C176.418 30 180 33.5817 180 38V40H20V38Z" fill="#e5e7eb"/>
+                <rect x="35" y="55" width="40" height="50" rx="4" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+                <path d="M40 65H70M40 75H65M40 85H70" stroke="#e2e8f0" stroke-width="3" stroke-linecap="round"/>
+                <rect x="80" y="55" width="40" height="50" rx="4" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+                <path d="M85 65H115M85 75H110M85 85H115" stroke="#e2e8f0" stroke-width="3" stroke-linecap="round"/>
+                <rect x="125" y="55" width="40" height="50" rx="4" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+                <path d="M130 65H160M130 75H155M130 85H160" stroke="#e2e8f0" stroke-width="3" stroke-linecap="round"/>
+                <g transform="translate(140, 95) rotate(15)">
+                    <rect width="30" height="30" rx="3" fill="#fef9c3"/>
+                    <path d="M0 3C0 1.34315 1.34315 0 3 0H10L0 10V3Z" fill="#fbbf24"/>
+                </g>
+            </svg>
+            <p class="max-w-3xl">Tempelkan mahakarya flowchart kalian di dinding. Kita akan adakan pameran mini <strong>Gallery Walk</strong>!</p>
+            <div class="mt-4 w-full max-w-3xl text-left space-y-3">
+                <p class="list-item"><span class="list-icon">🚶</span><span>Setiap kelompok akan berkeliling untuk melihat dan menganalisis hasil karya tim lain.</span></p>
+                <p class="list-item"><span class="list-icon">📝</span><span>Gunakan sticky notes yang dibagikan untuk memberi pujian atau pertanyaan pada karya temanmu.</span></p>
+            </div>
+        </div>
+
+        <!-- Slide 19: Kuis Asesmen Sumatif -->
+        <div class="slide scrollable">
+            <h2 class="flex-shrink-0">Kuis Asesmen Sumatif</h2>
+            <p class="mb-4 max-w-3xl flex-shrink-0">Jawab 10 pertanyaan berikut untuk mendapatkan skor maksimal 100 dan naik level!</p>
+            <div id="quiz-container" class="w-full max-w-3xl space-y-4 text-left p-2"></div>
+            <button id="submit-quiz-btn" class="gemini-button mt-6 flex-shrink-0">Kirim Jawaban & Klaim Poin!</button>
+            <div id="quiz-result" class="mt-4 text-center font-bold text-lg hidden flex-shrink-0"></div>
+        </div>
+
+        <!-- Slide 20: Refleksi -->
+        <div class="slide">
+            <h2>Refleksi & Pohon Harapan</h2>
+            <div id="reflection-form" class="w-full max-w-lg">
+                <p class="text-center text-sm mb-6">Bagaimana pendapatmu & apa harapanmu untuk materi selanjutnya?</p>
+                <div class="text-center mb-4">
+                    <p class="font-bold mb-2">Beri Peringkat Pengalamanmu:</p>
+                    <div id="rating-emoticons" class="rating-emoticons flex justify-center gap-4">
+                        <span data-value="1" title="Kurang Suka">😞</span><span data-value="2" title="Biasa Saja">😐</span><span data-value="3" title="Cukup Suka">😊</span><span data-value="4" title="Suka">😄</span><span data-value="5" title="Sangat Suka!">🤩</span>
+                    </div>
+                </div>
+                <div>
+                    <label for="reflection-text" class="font-bold mb-2 block">Tuliskan harapanmu untuk materi berikutnya di "daun" ini:</label>
+                    <textarea id="reflection-text" rows="3" class="w-full p-2 border border-slate-300 rounded-lg" placeholder="Contoh: Saya ingin belajar membuat flowchart untuk gim..."></textarea>
+                </div>
+                <div class="text-center mt-6">
+                    <button id="submit-reflection-btn" class="gemini-button">Tempelkan Harapanku!</button>
+                </div>
+            </div>
+            <div id="pohon-harapan-container" class="hidden text-center py-10">
+                <h3 class="text-2xl font-bold mb-4">Pohon Harapan Kelas Kita</h3>
+                <div class="tree-container"><div id="tree-canopy" class="tree-canopy" style="background-color: var(--accent-1);"></div><div class="tree-trunk" style="background-color: #8d5524;"></div></div>
+            </div>
+        </div>
+        
+        <!-- Slide 21: Evaluasi Pengalaman (BARU) -->
+        <div class="slide">
+            <h2>Evaluasi Pengalaman Belajar</h2>
+            <p class="max-w-3xl mb-6">Gimana perasaannya setelah berhasil bikin 'peta logika' dari nol? Keren, kan? Sekarang mari kita refleksi sejenak:</p>
+            <div class="w-full max-w-3xl text-left space-y-6">
+                <div class="bg-slate-50 p-4 rounded-lg">
+                    <p class="font-bold mb-3 text-center">1. Menurut kalian, apa bagian paling challenging dari proyek ini?</p>
+                    <div class="flex gap-4 justify-center" id="eval-challenge-buttons">
+                        <button class="eval-button flex-1 p-4 rounded-lg bg-white border-2 border-slate-200 hover:border-blue-400 transition">🧠 Mikirin Langkahnya</button>
+                        <button class="eval-button flex-1 p-4 rounded-lg bg-white border-2 border-slate-200 hover:border-blue-400 transition">🎨 Milih Simbolnya</button>
+                    </div>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-lg">
+                    <label for="eval-improvement" class="font-bold mb-2 block text-center">2. Setelah lihat karya kelompok lain, ada ide baru nggak buat perbaiki flowchart kalian?</label>
+                    <textarea id="eval-improvement" rows="3" class="w-full p-2 border border-slate-300 rounded-lg" placeholder="Contoh: Ternyata bisa dibuat lebih simpel pakai simbol decision..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 22: Kesimpulan & Apresiasi -->
+        <div class="slide">
+            <h2>Kesimpulan & Apresiasi</h2>
+            <p class="mb-6 max-w-4xl">Selamat! Hari ini kita telah belajar bahwa:</p>
+            <div class="w-full max-w-3xl mt-4 text-left space-y-2">
+                 <p class="list-item bg-blue-50 p-3 rounded-lg"><span class="list-icon">✅</span><span>**Algoritma** adalah fondasi dari semua program, seperti resep untuk komputer.</span></p>
+                 <p class="list-item bg-green-50 p-3 rounded-lg"><span class="list-icon">✅</span><span>**Flowchart** membantu kita memvisualisasikan algoritma agar mudah dipahami dan bebas dari kesalahan logika.</span></p>
+                 <p class="list-item bg-yellow-50 p-3 rounded-lg"><span class="list-icon">✅</span><span>Kemampuan berpikir logis dan terstruktur adalah **keterampilan super** bagi seorang programmer.</span></p>
+            </div>
+            <p class="mt-6 font-bold text-lg">Apresiasi setinggi-tingginya untuk kerja keras dan kreativitas kalian semua <br>dalam proyek hari ini!</p>
+        </div>
+
+        <!-- Slide 23: Penutup -->
+         <div class="slide" style="background: linear-gradient(135deg, #34d399 0%, #10b981 100%);">
+            <div class="text-white text-center">
+                 <h2 class="text-3xl font-bold">Pertemuan Berikutnya 🔥</h2>
+                 <div class="mt-4 bg-black bg-opacity-20 px-6 py-4 rounded-xl">
+                    <p class="font-bold text-xl">Level Up: Dari Gambar ke Kata-kata Logis</p>
+                    <p class="mt-1">Kita akan belajar tentang **Pseudocode**, cara menuliskan algoritma yang lebih mirip dengan bahasa pemrograman sungguhan. Siapkan logikamu!</p>
+                 </div>
+                 <p class="mt-8">Terima kasih atas semangatnya hari ini! Mari kita tutup dengan do'a. <br><span class="italic">Alhamdulillahirabbil 'Alamin </span> <span class="text-xl">🤲</span></p>
+            </div>
+        </div>
+
+        <!-- Navigasi -->
+        <div id="prev" class="nav-button">Sebelumnya</div>
+        <div id="next" class="nav-button">Berikutnya</div>
+        <div id="slide-counter" class="slide-counter"></div>
+    </div>
+
+    <script>
+        window.onload = function () {
+            let userPoints = 0;
+            let userLevel = "Pemula";
+
+            const slides = document.querySelectorAll('.slide');
+            const prevBtn = document.getElementById('prev');
+            const nextBtn = document.getElementById('next');
+            const slideCounter = document.getElementById('slide-counter');
+            let currentSlide = 0;
+
+            function showSlide(n) {
+                slides.forEach(slide => slide.classList.remove('active'));
+                currentSlide = (n + slides.length) % slides.length;
+                slides[currentSlide].classList.add('active');
+                updateNav();
+            }
+
+            function updateNav() {
+                slideCounter.textContent = `${currentSlide + 1} / ${slides.length}`;
+                prevBtn.style.display = currentSlide === 0 ? 'none' : 'block';
+                nextBtn.style.display = currentSlide === slides.length - 1 ? 'none' : 'block';
+            }
+
+            nextBtn.addEventListener('click', () => showSlide(currentSlide + 1));
+            prevBtn.addEventListener('click', () => showSlide(currentSlide - 1));
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' && currentSlide < slides.length - 1) showSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft' && currentSlide > 0) showSlide(currentSlide - 1);
+            });
+            
+            // --- Interactive Opening ---
+            function updateTime() {
+                const now = new Date();
+                const greetingEl = document.getElementById('greeting');
+                const dateEl = document.getElementById('date-display');
+                const timeEl = document.getElementById('time-display');
+                
+                const hour = now.getHours();
+                if (hour < 11) greetingEl.textContent = 'Selamat Pagi!';
+                else if (hour < 15) greetingEl.textContent = 'Selamat Siang!';
+                else if (hour < 19) greetingEl.textContent = 'Selamat Sore!';
+                else greetingEl.textContent = 'Selamat Malam!';
+
+                dateEl.textContent = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                timeEl.textContent = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            }
+            updateTime();
+            setInterval(updateTime, 1000);
+            showSlide(0);
+
+            // --- Theme Switcher ---
+            const themeSwitcher = document.getElementById('theme-switcher');
+            const root = document.documentElement;
+            const themes = {
+                default: { '--bg-color': '#f0f4f8', '--text-color': '#334155', '--card-bg': 'white', '--header-color': '#1e293b', '--accent-1': '#43AA8B', '--accent-2': '#F9C74F', '--button-bg': 'linear-gradient(135deg, #f9a8d4, #c084fc)' },
+                dark: { '--bg-color': '#1e293b', '--text-color': '#e2e8f0', '--card-bg': '#334155', '--header-color': 'white', '--accent-1': '#90BE6D', '--accent-2': '#F9C74F', '--button-bg': 'linear-gradient(135deg, #90BE6D, #43AA8B)' },
+                beach: { '--bg-color': '#fffbeb', '--text-color': '#78350f', '--card-bg': 'white', '--header-color': '#92400e', '--accent-1': '#2563eb', '--accent-2': '#ea580c', '--button-bg': 'linear-gradient(135deg, #fb923c, #f97316)' }
+            };
+            themeSwitcher.addEventListener('change', (e) => {
+                const theme = themes[e.target.value];
+                for(const key in theme) {
+                    root.style.setProperty(key, theme[key]);
+                }
+            });
+
+            // --- Gamification Logic ---
+            const levelDisplay = document.getElementById('level-display');
+            const pointsDisplay = document.getElementById('points-display');
+            function updateGamification() {
+                pointsDisplay.textContent = userPoints;
+                if (userPoints >= 80) userLevel = "Programmer Andal 🧑‍💻";
+                else if (userPoints >= 50) userLevel = "Coder Terampil 👍";
+                else if (userPoints > 0) userLevel = "Calon Programmer 🙂";
+                levelDisplay.textContent = userLevel;
+            }
+            
+            // --- Mindful Learning: Feelings ---
+            const feelingEmoticons = document.querySelectorAll('#feeling-emoticons span');
+            const feelingFeedback = document.getElementById('feeling-feedback');
+            feelingEmoticons.forEach(emo => {
+                emo.addEventListener('click', () => {
+                    feelingEmoticons.forEach(e => e.classList.remove('selected'));
+                    emo.classList.add('selected');
+                    feelingFeedback.textContent = `Terima kasih! Senang mengetahui perasaanmu hari ini.`;
+                    feelingFeedback.style.opacity = '1';
+                });
+            });
+            
+            // --- Ice Breaker: Freestyle Algorithm ---
+            const startFreestyleBtn = document.getElementById('start-freestyle-btn');
+            const freestyleDisplay = document.getElementById('freestyle-sequence-display');
+            const freestylePlaceholder = document.getElementById('freestyle-placeholder');
+            const freestyleResult = document.getElementById('freestyle-result');
+
+            const actions = [
+                { text: "Angkat Tangan Kanan", emoji: "🙋" },
+                // { text: "Tepuk Tangan 2x", emoji: "👏" },
+                { text: "Silangkan Tangan", emoji: "🙅‍♂️" },
+                { text: "Pegang Kepala", emoji: "🙆‍♂️" },
+                { text: "Putar Badan", emoji: "🔄" },
+                { text: "Hore!", emoji: "🎉" }
+            ];
+
+            startFreestyleBtn.addEventListener('click', () => {
+                startFreestyleBtn.disabled = true;
+                freestylePlaceholder.style.display = 'none';
+                freestyleDisplay.innerHTML = ''; // Clear previous results
+                freestyleResult.style.opacity = 0;
+
+                actions.forEach((action, index) => {
+                    setTimeout(() => {
+                        const actionDiv = document.createElement('div');
+                        actionDiv.className = 'action-item';
+                        actionDiv.innerHTML = `<span class="emoji">${action.emoji}</span><span>${action.text}</span>`;
+                        freestyleDisplay.appendChild(actionDiv);
+                    }, index * 1500); // Muncul setiap 1.5 detik
+                });
+
+                // Tampilkan hasil setelah semua aksi selesai
+                setTimeout(() => {
+                    freestyleDisplay.innerHTML = ''; // Kosongkan gerakan
+                    freestyleResult.textContent = "Kerja Bagus! +10 Poin ✨";
+                    freestyleResult.style.opacity = 1;
+                    userPoints += 10;
+                    updateGamification();
+                    startFreestyleBtn.disabled = false; // Aktifkan tombol lagi
+                }, actions.length * 1500 + 500);
+            });
+
+
+            // --- Mindful Learning: STOP Technique ---
+            const startStopBtn = document.getElementById('start-stop-btn');
+            const stopCards = {
+                s: document.getElementById('stop-s'),
+                t: document.getElementById('stop-t'),
+                o: document.getElementById('stop-o'),
+                p: document.getElementById('stop-p')
+            };
+            startStopBtn.addEventListener('click', () => {
+                startStopBtn.disabled = true;
+                Object.values(stopCards).forEach(card => card.classList.remove('visible'));
+                
+                setTimeout(() => stopCards.s.classList.add('visible'), 500);
+                setTimeout(() => stopCards.t.classList.add('visible'), 2000);
+                setTimeout(() => stopCards.o.classList.add('visible'), 3500);
+                setTimeout(() => {
+                    stopCards.p.classList.add('visible');
+                    startStopBtn.disabled = false;
+                }, 5000);
+            });
+
+            // --- Quiz Data & Setup (Updated to 10 Questions) ---
+            const quizData = [
+                { q: "Simbol apa yang WAJIB ada di awal dan akhir sebuah flowchart?", o: ["Persegi panjang (Process)", "Belah ketupat (Decision)", "Oval (Terminator)"], a: "c" },
+                { q: "Jika ada kondisi 'Apakah nilai > 10?', simbol yang paling tepat digunakan adalah...", o: ["Terminator", "Decision", "Input/Output"], a: "b" },
+                { q: "Proses kembali ke langkah sebelumnya untuk mengulang suatu tindakan disebut...", o: ["Proses akhir", "Perulangan (Looping)", "Proses input"], a: "b" },
+                { q: "Mengapa penting membuat flowchart SEBELUM coding?", o: ["Agar program terlihat keren", "Merencanakan logika & menemukan eror lebih awal", "Hanya untuk dokumentasi"], a: "b" },
+                { q: "Langkah 'mengetik pesan' dalam algoritma mengirim WhatsApp adalah contoh dari...", o: ["Input", "Output", "Proses"], a: "a" },
+                { q: "Manakah yang BUKAN merupakan ciri algoritma yang baik?", o: ["Harus berhenti (finite)", "Jelas dan tidak ambigu", "Harus rumit dan panjang"], a: "c" },
+                { q: "Dalam flowchart, panah (arrow) digunakan untuk...", o: ["Menunjukkan arah alur proses", "Menandai akhir program", "Menyimpan data sementara"], a: "a" },
+                { q: "Pilar Berpikir Komputasional yang fokus pada pemecahan masalah besar menjadi bagian-bagian kecil disebut...", o: ["Abstraksi", "Dekomposisi", "Pengenalan Pola"], a: "b" },
+                { q: "Saat membuat flowchart, Anda mengabaikan detail warna tombol dan hanya fokus pada fungsinya. Ini adalah contoh dari...", o: ["Algoritma", "Dekomposisi", "Abstraksi"], a: "c" },
+                { q: "Kamu ingin membuat teh. Langkah 'menuangkan air panas' adalah contoh dari simbol...", o: ["Terminator (Mulai/Selesai)", "Proses (Process)", "Decision (Keputusan)"], a: "b" }
+            ];
+
+            const quizContainer = document.getElementById('quiz-container');
+            quizData.forEach((item, index) => {
+                const qDiv = document.createElement('div');
+                qDiv.className = 'quiz-question bg-slate-50 p-4 rounded-lg';
+                let optionsHtml = '';
+                item.o.forEach((option, i) => {
+                    const optionId = `q${index}${String.fromCharCode(97 + i)}`;
+                    optionsHtml += `<div class="quiz-option"><input type="radio" name="q${index}" id="${optionId}" value="${String.fromCharCode(97 + i)}" class="hidden"><label for="${optionId}">${String.fromCharCode(65 + i)}. ${option}</label></div>`;
+                });
+                qDiv.innerHTML = `<p class="font-bold mb-3">${index + 1}. ${item.q}</p><div class="space-y-2">${optionsHtml}</div>`;
+                quizContainer.appendChild(qDiv);
+            });
+
+            // --- Quiz Logic ---
+            const submitQuizBtn = document.getElementById('submit-quiz-btn');
+            const quizResultEl = document.getElementById('quiz-result');
+            submitQuizBtn.addEventListener('click', () => {
+                let score = 0;
+                quizData.forEach((item, index) => {
+                    const selected = document.querySelector(`input[name="q${index}"]:checked`);
+                    const options = document.querySelectorAll(`input[name="q${index}"]`);
+                    options.forEach(opt => opt.parentElement.classList.remove('correct', 'incorrect'));
+                    if (selected) {
+                        if (selected.value === item.a) {
+                            score++;
+                            selected.parentElement.classList.add('correct');
+                        } else {
+                            selected.parentElement.classList.add('incorrect');
+                            document.getElementById(`q${index}${item.a}`).parentElement.classList.add('correct');
+                        }
+                    } else {
+                        // Tandai jawaban yang benar jika tidak ada yang dipilih
+                        document.getElementById(`q${index}${item.a}`).parentElement.classList.add('correct');
+                    }
+                });
+                const pointsEarned = score * 10;
+                userPoints += pointsEarned;
+                updateGamification();
+                quizResultEl.innerHTML = `Skor Kamu: ${pointsEarned} / 100<br>Kamu benar ${score} dari ${quizData.length} soal!`;
+                quizResultEl.classList.remove('hidden');
+                submitQuizBtn.disabled = true;
+            });
+
+            // --- Evaluasi Logic ---
+            const evalButtons = document.querySelectorAll('#eval-challenge-buttons .eval-button');
+            evalButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    evalButtons.forEach(btn => btn.classList.remove('selected'));
+                    button.classList.add('selected');
+                });
+            });
+            
+            // --- Gemini API ---
+            const callGemini = async (prompt, button, outputElement, originalText) => {
+                 button.disabled = true;
+                 button.textContent = 'AI Sedang Berpikir...';
+                 outputElement.classList.remove('hidden');
+                 outputElement.textContent = 'Memuat...';
+                 try {
+                     const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+                     const apiKey = ""; // Di sini
+                     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                     const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                     if (!response.ok) throw new Error(`API request failed`);
+                     const result = await response.json();
+                     if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
+                         outputElement.textContent = result.candidates[0].content.parts[0].text;
+                     } else { outputElement.textContent = 'Maaf, gagal mendapatkan respons.'; }
+                 } catch (error) { outputElement.textContent = 'Terjadi kesalahan saat menghubungi AI.';
+                 } finally { button.disabled = false; button.textContent = originalText; }
+            };
+
+            // --- Reflection & Wishing Tree Logic ---
+            const ratingEmoticons = document.querySelectorAll('#rating-emoticons span');
+            const submitReflectionBtn = document.getElementById('submit-reflection-btn');
+            const reflectionForm = document.getElementById('reflection-form');
+            const pohonHarapanContainer = document.getElementById('pohon-harapan-container');
+            const canopy = document.getElementById('tree-canopy');
+            const reflectionText = document.getElementById('reflection-text');
+
+            ratingEmoticons.forEach(emo => emo.addEventListener('click', () => {
+                ratingEmoticons.forEach(e => e.classList.remove('selected'));
+                emo.classList.add('selected');
+            }));
+
+            const addLeafToTree = (text) => {
+                const leaf = document.createElement('div');
+                leaf.className = 'wish-leaf';
+                leaf.textContent = text.substring(0, 30) + (text.length > 30 ? '...' : '');
+                leaf.title = text;
+                leaf.style.top = `${Math.random() * 75 + 5}%`;
+                leaf.style.left = `${Math.random() * 75 + 5}%`;
+                canopy.appendChild(leaf);
+                setTimeout(() => { leaf.style.transform = 'scale(1)'; }, 50);
+            };
+            
+            addLeafToTree('Belajar looping lebih dalam!');
+            addLeafToTree('Kapan kita buat gim?');
+
+            submitReflectionBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (reflectionText.value.trim() !== '') {
+                    addLeafToTree(reflectionText.value);
+                }
+                reflectionForm.classList.add('hidden');
+                pohonHarapanContainer.classList.remove('hidden');
+            });
+
+            // --- Group Generator ---
+            const generateGroupsBtn = document.getElementById('generate-groups-btn');
+            const studentNamesInput = document.getElementById('student-names');
+            const groupSizeInput = document.getElementById('group-size');
+            const groupOutput = document.getElementById('group-output');
+
+            generateGroupsBtn.addEventListener('click', () => {
+                const names = studentNamesInput.value.split(',').map(name => name.trim()).filter(name => name);
+                const size = parseInt(groupSizeInput.value) || 4;
+                
+                // Shuffle names
+                for (let i = names.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [names[i], names[j]] = [names[j], names[i]];
+                }
+
+                groupOutput.innerHTML = '';
+                let groupNum = 1;
+                for (let i = 0; i < names.length; i += size) {
+                    const groupNames = names.slice(i, i + size);
+                    const groupCard = document.createElement('div');
+                    groupCard.className = 'bg-slate-100 p-3 rounded-lg';
+                    let namesHtml = groupNames.map(name => `<li>${name}</li>`).join('');
+                    groupCard.innerHTML = `<h4 class="font-bold text-sm" style="color: var(--accent-1);">Kelompok ${groupNum}</h4><ul class="text-xs list-disc list-inside">${namesHtml}</ul>`;
+                    groupOutput.appendChild(groupCard);
+                    groupNum++;
+                }
+            });
+
+            // --- AI Buttons Setup ---
+            const ideaBtn = document.getElementById('idea-btn');
+            const ideaOutput = document.getElementById('idea-output');
+            ideaBtn.originalText = '✨ Cari Ide';
+            ideaBtn.addEventListener('click', () => {
+                const prompt = "Berikan 5 ide aktivitas sehari-hari yang sederhana dan menarik untuk dibuatkan flowchart oleh siswa kelas 10. Contoh: Membuat mi instan. Berikan hanya dalam bentuk daftar bernomor.";
+                callGemini(prompt, ideaBtn, ideaOutput, ideaBtn.originalText);
+            });
+
+            const stepsBtn = document.getElementById('steps-btn');
+            const stepsOutput = document.getElementById('steps-output');
+            const topicInput = document.getElementById('topic-input');
+            stepsBtn.originalText = '✨ Uraikan Langkahnya';
+            stepsBtn.addEventListener('click', () => {
+                const topic = topicInput.value;
+                if (!topic) {
+                    stepsOutput.classList.remove('hidden');
+                    stepsOutput.textContent = 'Harap masukkan topik terlebih dahulu.';
+                    return;
+                }
+                const prompt = `Buatkan algoritma atau langkah-langkah detail dalam bentuk daftar bernomor untuk aktivitas berikut: "${topic}". Buat langkah-langkahnya sangat jelas, logis, dan mudah diikuti untuk siswa kelas 10. Pertimbangkan juga kemungkinan kondisi (jika/maka).`;
+                callGemini(prompt, stepsBtn, stepsOutput, stepsBtn.originalText);
+            });
+            
+            const realWorldBtn = document.getElementById('real-world-btn');
+            const realWorldOutput = document.getElementById('real-world-output');
+            realWorldBtn.originalText = '✨ Beri Contoh di Dunia Nyata';
+            realWorldBtn.addEventListener('click', () => {
+                const prompt = "Jelaskan dengan bahasa yang sederhana untuk siswa SMK, 3 contoh penggunaan algoritma dalam teknologi yang mereka gunakan sehari-hari (seperti media sosial, game, atau aplikasi peta). Gunakan daftar bernomor.";
+                callGemini(prompt, realWorldBtn, realWorldOutput, realWorldBtn.originalText);
+            });
+            
+            const feedbackBtn = document.getElementById('feedback-btn');
+            const feedbackOutput = document.getElementById('feedback-output');
+            const feedbackInput = document.getElementById('feedback-input');
+            feedbackBtn.originalText = '✨ Analisis Logikaku';
+            feedbackBtn.addEventListener('click', () => {
+                const userAlgorithm = feedbackInput.value;
+                const userTopic = document.getElementById('topic-input').value || "aktivitas yang diberikan";
+                if (!userAlgorithm) {
+                    feedbackOutput.classList.remove('hidden');
+                    feedbackOutput.textContent = 'Harap ketikkan alur logikamu terlebih dahulu.';
+                    return;
+                }
+                const prompt = `Anda adalah seorang guru RPL yang ramah. Seorang siswa telah merancang algoritma untuk topik '${userTopic}'. Berikut adalah algoritmanya: "${userAlgorithm}". Berikan umpan balik yang konstruktif dalam 2-3 poin. Fokus pada kelengkapan langkah, potensi ambiguitas, atau saran perbaikan agar lebih logis. Gunakan bahasa Indonesia yang positif dan memotivasi.`;
+                callGemini(prompt, feedbackBtn, feedbackOutput, feedbackBtn.originalText);
+            });
+        };
+    </script>
+</body>
+</html>
